@@ -10,7 +10,7 @@ def register(request):
     try:
         req = json.loads(request.body)
         user = User()
-        user.username = req['mobile']
+        user.mobile = req['username']
         user.nickname = req['nickname']
         user.password = req['password']
         sql = 'select mobile from user where mobile=' + user.mobile

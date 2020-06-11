@@ -26,6 +26,7 @@
         </div>
       </el-form>
     </div>
+    <register :visible="registering" @close="registering=false"></register>
   </div>
 </template>
 
@@ -65,8 +66,8 @@
                 this.$router.push('mail');
               } else this.$message.error(res.data.message);
             }).catch(error => {
-                this.$message.error("服务器开小差了");
-              });
+              this.$message.error("服务器开小差了");
+            });
           } else {
             this.$message.error('请输入用户名密码');
           }
