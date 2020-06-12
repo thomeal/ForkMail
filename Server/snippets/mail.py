@@ -1,8 +1,9 @@
 import imaplib
 import smtplib
-from email import parser, message
 from email.header import Header, decode_header
 from email.mime.text import MIMEText
+from email.parser import Parser
+from email.utils import parseaddr
 
 
 def guess_charset(msg):
@@ -35,7 +36,7 @@ def print_info(msg, indent=0):
                     name = decode_str(hdr)
                     value = u'%s <%s>' % (name, addr)
             print('%s%s: %s' % ('  ' * indent, header, value))
-    if (msg.is_multipart()):
+    if msg.is_multipart():
         parts = msg.get_payload()
         for n, part in enumerate(parts):
             print('%spart %s' % ('  ' * indent, n))
@@ -135,7 +136,8 @@ class Email:
         # 将邮件内存由byte转成str
 
         email_content = byte_content[0][1].decode()
-
+        msg = Parser().parsestr(email_content)
+        print_info(msg)
         # 关闭select
         email_server.close()
         # 关闭连接
