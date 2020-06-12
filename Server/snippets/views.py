@@ -3,7 +3,7 @@ import json
 from django.http import JsonResponse
 
 from .models import *
-from .token import create_token, check_token
+from .token import create_token, check_token, get_username
 
 
 def register(request):
@@ -64,3 +64,13 @@ def checkAuth(request):
     return JsonResponse({
         'authorized': check_token(request.GET.get('token'))
     }, json_dumps_params={'ensure_ascii': False})
+
+
+def getMails(request):
+    token = request.GET.get('token')
+    if check_token(token):
+        user = get_username(token)
+        token = create_token(user)
+#     unfinished
+
+

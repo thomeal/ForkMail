@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="注册" width="40%" top="20vh" :show-close="false" :visible.sync="enabled" @close="reset">
+  <el-dialog title="注册" width="40%" top="20vh" :show-close="false" :visible.sync="enabled" @closed="reset">
     <el-form :model="registration" :rules="rules">
       <el-form-item label="手机号" :label-width="formLabelWidth" prop="username">
         <el-input v-model="registration.username"></el-input>
