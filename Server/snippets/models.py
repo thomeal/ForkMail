@@ -21,7 +21,7 @@ class User(models.Model):
 
 
 class Email(models.Model):
-    email = models.CharField('emailAddress', null=False, max_length=40)
+    email = models.CharField('email', primary_key=True, max_length=40)
     key = models.CharField('key', null=False, max_length=100)
     user = models.ForeignKey(User, to_field='mobile', on_delete=models.CASCADE)
     smtp_host = models.CharField('smtp_host', null=False, max_length=50)

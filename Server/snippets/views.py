@@ -2,6 +2,7 @@ import json
 
 from django.http import JsonResponse
 
+from .mail import *
 from .models import *
 from .token import create_token, check_token, get_username
 
@@ -68,9 +69,34 @@ def checkAuth(request):
 
 def getMails(request):
     token = request.GET.get('token')
-    if check_token(token):
+    if not check_token(token):
+        return JsonResponse({
+            'message': '认证失败，需要重新登录',
+            'success': 0,
+        }, json_dumps_params={'ensure_ascii': False})
+    try:
         user = get_username(token)
-        token = create_token(user)
-#     unfinished
-
-
+        # token = create_token(user)
+        account = Email.objects.raw('select * from email where email = ' + request.GET.get('mail'))[0]
+        if account.user.mobile != user:
+            raise Exception('您的账号名下没有该邮箱')
+        mail = MailAccount(account=account).getAllMails()
+        return JsonResponse({
+            'message': '操作成功',
+            'success': 0,
+            'mail': mail,
+            'token': token
+        }, json_dumps_params={'ensure_ascii': False})
+    # except IndexError as ie:
+    #     return JsonResponse({
+    #         'message': '您的账号名下没有该邮箱',
+    #         'success': 0,
+    #         'token': token
+    #     }, json_dumps_params={'ensure_ascii': False})
+    except Exception as e:
+        # return JsonResponse({
+        #     'message': str(e),
+        #     'success': 0,
+        #     'token': token
+        # }, json_dumps_params={'ensure_ascii': False})
+        raise e

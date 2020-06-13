@@ -1,9 +1,12 @@
 import imaplib
 import smtplib
+import ssl
 from email.header import Header, decode_header
 from email.mime.text import MIMEText
 from email.parser import Parser
 from email.utils import parseaddr
+
+from imbox import Imbox
 
 
 def guess_charset(msg):
@@ -54,14 +57,14 @@ def print_info(msg, indent=0):
             print('%sAttachment: %s' % ('  ' * indent, content_type))
 
 
-class Email:
-    def __init__(self, smtp_host, smtp_port, imap_host, imap_port, address, key):
-        self.smtp_host = smtp_host
-        self.smtp_port = smtp_port
-        self.imap_host = imap_host
-        self.imap_port = imap_port
-        self.address = address
-        self.key = key
+class MailAccount:
+    def __init__(self, account):
+        self.smtp_host = account.smtp_host
+        self.smtp_port = account.smtp_port
+        self.imap_host = account.imap_host
+        self.imap_port = account.imap_port
+        self.address = account.email
+        self.key = account.key
 
     # 此函数通过使用smtplib实现发送邮件
     def send_email_by_smtp(self, to, subject, context):
@@ -143,13 +146,11 @@ class Email:
         # 关闭连接
         email_server.logout()
 
-
-if __name__ == "__main__":
-    # 实例化
-    email_client = Email('smtp.qq.com', 465, 'imap.qq.com', 993, '1134372723@qq.com', 'odtgbaxmzscqjffe')
-    # 调用通过smtp发送邮件的发送函数
-    # email_client.send_email_by_smtp('180300507@stu.hit.edu.cn', 'SMTP测试', 'HelloSMTP')
-    # 调用通过imap4接收邮件的接收函数
-    email_client.recv_email_by_imap4()
-
-    exit(0)
+    def getAllMails(self):
+        with Imbox(hostname=self.imap_host,
+                   username=self.address,
+                   password=self.key,
+                   ssl=False,
+                   ssl_context=ssl.create_default_context(),
+                   starttls=False) as imbox:
+            return imbox.messages()
