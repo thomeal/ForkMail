@@ -80,11 +80,36 @@ def getMails(request):
         account = Email.objects.raw('select * from email where email = ' + request.GET.get('mail'))[0]
         if account.user.mobile != user:
             raise Exception('您的账号名下没有该邮箱')
-        mail = MailAccount(account=account).getAllMails()
+        mails = MailAccount(account=account).getAllMails()
+        mail_list = list(0 for i in range(mails.__len__()))
+        i = 0
+        for uid, message in mails:
+            if hasattr(message,'date'):
+                mail_list[i] = {
+                    'sender': message.sent_from,
+                    'receiver': message.sent_to,
+                    'subject': message.subject,
+                    'header': message.headers,
+                    'date': message.date,
+                    'html': message.body['html'],
+                    'plain': message.body['plain'],
+                    'attachments': message.attachments
+                }
+            else:
+                mail_list[i] = {
+                    'sender': message.sent_from,
+                    'receiver': message.sent_to,
+                    'subject': message.subject,
+                    'header': message.headers,
+                    'html': message.body['html'],
+                    'plain': message.body['plain'],
+                    'attachments': message.attachments
+                }
+            i += 1
         return JsonResponse({
             'message': '操作成功',
             'success': 0,
-            'mail': mail,
+            'mail': mail_list.__str__(),
             'token': token
         }, json_dumps_params={'ensure_ascii': False})
     # except IndexError as ie:

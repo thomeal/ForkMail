@@ -147,10 +147,10 @@ class MailAccount:
         email_server.logout()
 
     def getAllMails(self):
-        with Imbox(hostname=self.imap_host,
+        imbox = Imbox(hostname=self.imap_host,
                    username=self.address,
                    password=self.key,
                    ssl=False,
                    ssl_context=ssl.create_default_context(),
-                   starttls=False) as imbox:
-            return imbox.messages()
+                   starttls=False)
+        return imbox.messages()
