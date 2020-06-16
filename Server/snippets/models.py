@@ -1,15 +1,5 @@
 from django.db import models
 
-# 提取出了 pygments 支持的所有语言的词法分析程序
-from pygments.lexers import get_all_lexers
-from pygments.styles import get_all_styles
-
-LEXERS = [item for item in get_all_lexers() if item[1]]
-# 提取出了 pygments 支持的所有语言列表
-LANGUAGE_CHOICES = sorted([(item[1][0], item[0]) for item in LEXERS])
-# 提取出了 pygments 支持的所有格式化风格列表
-STYLE_CHOICES = sorted((item, item) for item in get_all_styles())
-
 
 class User(models.Model):
     mobile = models.CharField('mobile', primary_key=True, max_length=15)

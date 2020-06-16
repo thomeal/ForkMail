@@ -9,54 +9,6 @@ from email.utils import parseaddr
 from imbox import Imbox
 
 
-def guess_charset(msg):
-    charset = msg.get_charset()
-    if charset is None:
-        content_type = msg.get('Content-Type', '').lower()
-        pos = content_type.find('charset=')
-        if pos >= 0:
-            charset = content_type[pos + 8:].strip()
-    return charset
-
-
-def decode_str(s):
-    value, charset = decode_header(s)[0]
-    if charset:
-        value = value.decode(charset)
-    return value
-
-
-# indent用于缩进显示:
-def print_info(msg, indent=0):
-    if indent == 0:
-        for header in ['From', 'To', 'Subject']:
-            value = msg.get(header, '')
-            if value:
-                if header == 'Subject':
-                    value = decode_str(value)
-                else:
-                    hdr, addr = parseaddr(value)
-                    name = decode_str(hdr)
-                    value = u'%s <%s>' % (name, addr)
-            print('%s%s: %s' % ('  ' * indent, header, value))
-    if msg.is_multipart():
-        parts = msg.get_payload()
-        for n, part in enumerate(parts):
-            print('%spart %s' % ('  ' * indent, n))
-            print('%s--------------------' % ('  ' * indent))
-            print_info(part, indent + 1)
-    else:
-        content_type = msg.get_content_type()
-        if content_type == 'text/plain' or content_type == 'text/html':
-            content = msg.get_payload(decode=True)
-            charset = guess_charset(msg)
-            if charset:
-                content = content.decode(charset)
-            print('%sText: %s' % ('  ' * indent, content + '...'))
-        else:
-            print('%sAttachment: %s' % ('  ' * indent, content_type))
-
-
 class MailAccount:
     def __init__(self, account):
         self.smtp_host = account.smtp_host
@@ -107,44 +59,6 @@ class MailAccount:
         finally:
             # 关闭连接
             email_client.close()
-
-    # 此函数通过使用imaplib实现接收邮件
-    def recv_email_by_imap4(self):
-        # 要进行邮件接收的邮箱。改成自己的邮箱
-        email_address = self.address
-        # 要进行邮件接收的邮箱的密码。改成自己的邮箱的密码
-        email_password = self.key
-        # 邮箱对应的imap服务器，也可以直接是IP地址
-        # 改成自己邮箱的imap服务器；qq邮箱不需要修改此值
-        imap_server_host = self.imap_host
-        # 邮箱对应的pop服务器的监听端口。改成自己邮箱的pop服务器的端口；qq邮箱不需要修改此值
-        imap_server_port = self.imap_port
-
-        try:
-            # 连接imap服务器。如果没有使用SSL，将IMAP4_SSL()改成IMAP4()即可其他都不需要做改动
-            email_server = imaplib.IMAP4_SSL(host=imap_server_host, port=imap_server_port)
-        except Exception:
-            raise Exception('服务器失去连接')
-        try:
-            # 验证邮箱及密码是否正确
-            email_server.login(email_address, email_password)
-        except Exception:
-            raise Exception('邮箱地址或密钥错误')
-
-        # 邮箱中其收到的邮件的数量
-        email_server.select()
-        email_count = len(email_server.search(None, 'ALL')[1][0].split())
-        # 通过fetch(index)读取第index封邮件的内容；这里读取最后一封，也即最新收到的那一封邮件
-        typ, byte_content = email_server.fetch(f'{email_count}'.encode(), '(RFC822)')
-        # 将邮件内存由byte转成str
-
-        email_content = byte_content[0][1].decode()
-        msg = Parser().parsestr(email_content)
-        print_info(msg)
-        # 关闭select
-        email_server.close()
-        # 关闭连接
-        email_server.logout()
 
     def getAllMails(self):
         imbox = Imbox(hostname=self.imap_host,
