@@ -24,7 +24,7 @@ class MailAccount:
         message = MIMEText(message_context, 'plain', 'utf-8')
         message["From"] = "%s" % Header(sender_email_address, "utf-8")
         message["To"] = "%s" % Header(receiver_email, "utf-8")
-        message["Subject"] = Header(message_subject, "utf-8")
+        message["Subject"] = "%s" % Header(message_subject, "utf-8")
 
         email_client = smtplib.SMTP(smtp_server_host, smtp_server_port)
         try:

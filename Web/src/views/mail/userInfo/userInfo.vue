@@ -20,14 +20,28 @@
       <div class="infoBlock">
         <div class="infoLine" v-for="(mail,index) in mails" :key="index">
           <span class="infoBlack">{{mail}}</span>
-          <i class="el-icon-edit"/>
+          <!--          <i class="el-icon-edit"/>-->
           <i class="el-icon-delete"/>
         </div>
         <div class="infoLine">
-          <el-button icon="el-icon-plus" size="mini">添加邮箱</el-button>
+          <i class="el-icon-plus" @click="addingMail=true"> 添加邮箱</i>
         </div>
       </div>
     </div>
+    <el-dialog append-to-body title="添加邮箱" :visible="addingMail" width="40%">
+      <el-form :model="newMail" :rules="rules" ref="newMail">
+        <el-form-item label="地址" label-width="60px">
+          <el-input v-model="newMail.address" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="密钥" label-width="60px">
+          <el-input v-model="newMail.key" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addingMail = false">取 消</el-button>
+        <el-button type="primary" @click="addMail">确 定</el-button>
+      </div>
+    </el-dialog>
   </el-dialog>
 </template>
 
@@ -42,9 +56,60 @@
       return {
         mobile: '',
         nickname: '',
+        addingMail: false,
+        newMail:{
+          address: '',
+          key: '',
+        },
+        rules: {
+          address: [
+            {validator: this.validateAddress, trigger: 'blur'}
+          ],
+          key: [
+            {validator: this.validateKey, trigger: 'blur'}
+          ]
+        },
       }
     },
-    methods: {},
+    methods: {
+      addMail(){
+        this.$refs.newMail.validate(valid=>{
+          if (valid){
+            this.$axios({
+              url: 'http://localhost:8000/addMailBox/',
+              method: 'POST',
+              data:{
+                token: localStorage['token'],
+                email: this.newMail.address,
+                key: this.newMail.key,
+              }
+            }).then(res=>{
+              if (res.data.success){
+                this.addingMail = false;
+                this.$message.success(res.data.message)
+              }
+              else
+                this.$message.error(res.data.message)
+            }).catch(e=>{
+              this.$message.error('服务器开小差了')
+            })
+          }
+        })
+      },
+      validateAddress(rule, value, callback) {
+        let validateReg = new RegExp(/^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/);
+        if (validateReg.test(value))
+          callback();
+        else
+          callback(new Error('请输入有效的邮箱地址'));
+      },
+      validateKey(rule, value, callback) {
+        if (!value)
+          callback(new Error('请输入密钥'));
+        else
+          callback();
+      },
+    },
     computed: {
       visible() {
         return this.enabled;
@@ -102,6 +167,13 @@
       .infoLine {
         display: block;
         margin: 5px 5px;
+
+        .el-icon-plus {
+
+          &:hover {
+            color: rgba(2, 122, 255, 1.000);
+          }
+        }
 
         .el-icon-edit {
           margin: 0 5px;

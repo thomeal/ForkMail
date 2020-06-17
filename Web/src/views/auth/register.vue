@@ -1,6 +1,6 @@
 <template>
   <el-dialog title="注册" width="40%" top="20vh" :show-close="false" :visible.sync="enabled" @closed="reset">
-    <el-form :model="registration" :rules="rules">
+    <el-form :model="registration" :rules="rules" ref="login">
       <el-form-item label="手机号" :label-width="formLabelWidth" prop="username">
         <el-input v-model="registration.username"></el-input>
       </el-form-item>
@@ -47,22 +47,26 @@
     },
     methods: {
       register() {
-        this.$axios({
-          url: 'http://localhost:8000/register/',
-          method: 'POST',
-          data: {
-            username: this.registration.username,
-            password: this.registration.password,
-            nickname: this.registration.nickname,
+        this.$ref.register.validate(valid => {
+          if (valid) {
+            this.$axios({
+              url: 'http://localhost:8000/register/',
+              method: 'POST',
+              data: {
+                username: this.registration.username,
+                password: this.registration.password,
+                nickname: this.registration.nickname,
+              }
+            }).then(res => {
+              if (res.data.success) {
+                this.$message.success('注册成功');
+                this.$emit('close');
+              } else
+                this.$message.error(res.data.error);
+            }).catch(e => {
+              this.$message.error('服务器开小差了');
+            })
           }
-        }).then(res => {
-          if (res.data.success) {
-            this.$message.success('注册成功');
-            this.$emit('close');
-          } else
-            this.$message.error(res.data.error);
-        }).catch(e => {
-          this.$message.error('服务器开小差了');
         })
       },
       validateUsername(rule, value, callback) {

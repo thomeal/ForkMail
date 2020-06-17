@@ -22,10 +22,10 @@
           </el-select>
           <el-button icon="el-icon-refresh" size="mini" @click="getMailList"></el-button>
           <el-button-group>
-            <el-button icon="el-icon-chat-line-square" size="mini"></el-button>
+            <el-button icon="el-icon-chat-line-square" size="mini" @click="reply()"></el-button>
             <el-button icon="el-icon-delete" size="mini" @click="deleteMail"></el-button>
           </el-button-group>
-          <el-button icon="el-icon-edit" size="mini"></el-button>
+          <el-button icon="el-icon-edit" size="mini" @click="sendingMail=true"></el-button>
         </div>
         <el-input
           placeholder="搜索"
@@ -91,19 +91,22 @@
       <div class="content" v-else v-text="selectedMail.plain"></div>
     </div>
     <user-info :mails="mails" :enabled="showUserInfo" @close="showUserInfo=false"></user-info>
+    <send-mail :mail="selectedMailBox" :enabled="sendingMail" :reply="replyTo" @close="quitSending"></send-mail>
   </div>
 </template>
 
 <script>
   import UserInfo from "./userInfo/userInfo";
   import {Loading} from 'element-ui';
+  import SendMail from "./sendMail/sendMail";
 
   export default {
     name: "mail",
-    components: {UserInfo},
+    components: {SendMail, UserInfo},
     data() {
       return {
         showUserInfo: false,
+        sendingMail: false,
         user: '',
         search: '',
         selectedMailBox: '',
@@ -112,10 +115,18 @@
         rawMail: [],
         detail: '',
         filtered: [],
-        reply: ''
+        replyTo: ''
       }
     },
     methods: {
+      reply() {
+        this.replyTo = this.selectedMail.sender.email;
+        this.sendingMail = true;
+      },
+      quitSending() {
+        this.sendingMail = false;
+        this.replyTo = '';
+      },
       time() {
         let hour = new Date().getHours()
         if (hour < 5) return '晚上好'
@@ -201,6 +212,11 @@
         },
         deep: true,
         immediate: true
+      },
+      selectedMailBox: {
+        handler() {
+          this.getMailList();
+        }
       }
     },
     beforeMount() {

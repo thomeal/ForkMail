@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'^deleteMailBox/', views.deleteMailBox),
     url(r'^editMailBox/', views.editMailBox),
     url(r'^deleteMail/', views.deleteMail),
+    url(r'^sendMail/', views.sendMail),
 ]
