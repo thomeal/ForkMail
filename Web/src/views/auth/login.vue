@@ -64,6 +64,7 @@
                 this.$message.success(res.data.message);
                 localStorage['token'] = res.data.token;
                 localStorage['nickname'] = res.data.nickname;
+                 localStorage['mobile'] = res.data.mobile
                 this.$router.push('mail');
               } else this.$message.error(res.data.message);
             }).catch(error => {
