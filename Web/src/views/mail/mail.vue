@@ -90,7 +90,7 @@
            v-html="selectedMail.html!==''?selectedMail.html:selectedMail.plain"></div>
       <div class="content" v-else v-text="selectedMail.plain"></div>
     </div>
-    <user-info :mails="mails" :enabled="showUserInfo" @close="showUserInfo=false"></user-info>
+    <user-info @add="addMailBox" @delete="deleteMailBox" :mails="mails" :enabled="showUserInfo" @close="showUserInfo=false"></user-info>
     <send-mail :mail="selectedMailBox" :enabled="sendingMail" :reply="replyTo" @close="quitSending"></send-mail>
   </div>
 </template>
@@ -119,9 +119,17 @@
       }
     },
     methods: {
+      addMailBox(mail){
+        this.mails.push(mail);
+      },
+      deleteMailBox(index){
+        this.mails.splice(index,1);
+      },
       reply() {
         this.replyTo = this.selectedMail.sender.email;
-        this.sendingMail = true;
+        this.$nextTick(()=>{
+          this.sendingMail = true;
+        })
       },
       quitSending() {
         this.sendingMail = false;

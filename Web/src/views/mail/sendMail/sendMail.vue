@@ -114,8 +114,10 @@
     watch: {
       visible: {
         handler() {
-          this.receiver = this.reply;
-        }
+          this.header.receiver = this.reply;
+        },
+        immediate: true,
+        deep: true
       }
     }
   }

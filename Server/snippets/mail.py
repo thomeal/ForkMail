@@ -11,12 +11,13 @@ class MailAccount:
     def __init__(self, account):
         self.address = account.email
         self.key = account.key
+        self.smtpHost = account.smtp_host
+        self.imapHost = account.imap_host
 
     def send_email_by_smtp(self, to, subject, context):
-        host = self.address[search('@', self.address).span()[0]+1:]
         sender_email_address = self.address
         sender_email_password = self.key
-        smtp_server_host = 'smtp.'+host
+        smtp_server_host = self.smtpHost
         smtp_server_port = 25
         receiver_email = to
         message_subject = subject
@@ -37,7 +38,7 @@ class MailAccount:
             email_client.close()
 
     def getAllMails(self):
-        imbox = Imbox(hostname='imap.'+self.address[search('@', self.address).span()[0]+1:],
+        imbox = Imbox(hostname=self.imapHost,
                       username=self.address,
                       password=self.key,
                       ssl=False,
@@ -46,7 +47,7 @@ class MailAccount:
         return imbox.messages()
 
     def deleteMail(self,id):
-        imbox = Imbox(hostname='imap.' + self.address[search('@', self.address).span()[0] + 1:],
+        imbox = Imbox(hostname=self.imapHost,
                       username=self.address,
                       password=self.key,
                       ssl=False,

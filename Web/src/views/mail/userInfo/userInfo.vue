@@ -21,7 +21,7 @@
         <div class="infoLine" v-for="(mail,index) in mails" :key="index">
           <span class="infoBlack">{{mail}}</span>
           <!--          <i class="el-icon-edit"/>-->
-          <i class="el-icon-delete"/>
+          <i class="el-icon-delete" @click="deleteMailBox(mail,index)"/>
         </div>
         <div class="infoLine">
           <i class="el-icon-plus" @click="addingMail=true"> 添加邮箱</i>
@@ -30,11 +30,17 @@
     </div>
     <el-dialog append-to-body title="添加邮箱" :visible="addingMail" width="40%">
       <el-form :model="newMail" :rules="rules" ref="newMail">
-        <el-form-item label="地址" label-width="60px">
+        <el-form-item label="地址" label-position="top" prop="address">
           <el-input v-model="newMail.address" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="密钥" label-width="60px">
+        <el-form-item label="密钥" label-position="top" prop="key">
           <el-input v-model="newMail.key" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="IMAP服务器" label-position="top" prop="imapHost">
+          <el-input v-model="newMail.imapHost" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="SMTP服务器" label-position="top" prop="smtpHost">
+          <el-input v-model="newMail.smtpHost" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -57,43 +63,80 @@
         mobile: '',
         nickname: '',
         addingMail: false,
-        newMail:{
+        newMail: {
           address: '',
           key: '',
+          imapHost: '',
+          smtpHost: ''
         },
         rules: {
           address: [
             {validator: this.validateAddress, trigger: 'blur'}
           ],
           key: [
-            {validator: this.validateKey, trigger: 'blur'}
+            {required: true, message: '请输入密钥', trigger: 'blur'}
+          ],
+          imapHost: [
+            {required: true, message: '请输入IMAP服务器地址', trigger: 'blur'}
+          ],
+          smtpHost: [
+            {required: true, message: '请输入SMTP服务器地址', trigger: 'blur'}
           ]
         },
       }
     },
     methods: {
-      addMail(){
-        this.$refs.newMail.validate(valid=>{
-          if (valid){
+      addMail() {
+        this.$refs.newMail.validate(valid => {
+          if (valid) {
             this.$axios({
               url: 'http://localhost:8000/addMailBox/',
               method: 'POST',
-              data:{
+              data: {
                 token: localStorage['token'],
                 email: this.newMail.address,
                 key: this.newMail.key,
+                smtpHost: this.newMail.smtpHost,
+                imapHost: this.newMail.imapHost
               }
-            }).then(res=>{
-              if (res.data.success){
+            }).then(res => {
+              if (res.data.success) {
                 this.addingMail = false;
                 this.$message.success(res.data.message)
-              }
-              else
+                this.$emit('add',this.newMail.address);
+              } else
                 this.$message.error(res.data.message)
-            }).catch(e=>{
+            }).catch(e => {
               this.$message.error('服务器开小差了')
             })
           }
+        })
+      },
+      deleteMailBox(mail,index) {
+        this.$confirm('将删除该邮箱, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.$axios({
+            url: 'http://localhost:8000/deleteMailBox/',
+            method: 'POST',
+            data: {
+              token: localStorage['token'],
+              email: '\'' + mail + '\''
+            }
+          }).then(res => {
+            if (res.data.success) {
+              this.$message.success(res.data.message)
+              this.$emit('delete',index);
+            }
+            else{
+              this.$message.error(res.data.message)
+            }
+          }).catch(e=>{
+            this.$message.error('服务器开小差了')
+          })
+
         })
       },
       validateAddress(rule, value, callback) {
@@ -102,13 +145,7 @@
           callback();
         else
           callback(new Error('请输入有效的邮箱地址'));
-      },
-      validateKey(rule, value, callback) {
-        if (!value)
-          callback(new Error('请输入密钥'));
-        else
-          callback();
-      },
+      }
     },
     computed: {
       visible() {
@@ -131,6 +168,10 @@
 </style>
 
 <style lang="scss" scoped>
+  .el-form-item {
+    margin-bottom: 10px;
+  }
+
   .accountInfo {
     max-height: 500px;
     padding: 0 20px 10px;

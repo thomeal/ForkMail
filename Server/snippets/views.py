@@ -78,18 +78,13 @@ def addMailBox(request):
         user = get_username(token)
         mail.email = req['email']
         mail.key = req['key']
+        mail.smtp_host = req['smtpHost']
+        mail.imap_host = req['imapHost']
         mail.user = User.objects.raw('select * from user where mobile = ' + user)[0]
-        try:
-            email_client = smtplib.SMTP('smtp.'+mail.email[search('@', mail.email).span()[0]+1:], 25)
-            email_client.login(mail.email, mail.key)
-            email_client.close()
-        except Exception:
-            raise Exception('邮箱地址或密钥错误')
-        else:
-            sql = 'select email from email where email = \'' + mail.email + '\''
-            existed = Email.objects.raw(sql)[0]
-            if existed:
-                raise Exception("该邮箱已经被占用")
+        sql = 'select email from email where email = \'' + mail.email + '\''
+        existed = Email.objects.raw(sql)[0]
+        if existed:
+            raise Exception("该邮箱已经被占用")
     except IndexError as ie:
         mail.save()
         return JsonResponse({
@@ -104,7 +99,7 @@ def addMailBox(request):
     else:
         return JsonResponse({
             'message': '添加失败',
-            'success': 1,
+            'success': 0,
         }, json_dumps_params={'ensure_ascii': False})
 
 
@@ -300,6 +295,7 @@ def getMails(request):
                     'plain': plain,
                     'id': uid.decode(),
                 })
+            # print(str(message.sent_to),str(message.subject))
         test = [
             {
                 "sender": "[{'name': 'Ubisoft', 'email': 'news@news.ubisoft.com'}]",
