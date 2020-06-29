@@ -28,6 +28,7 @@
           <el-button icon="el-icon-edit" size="mini" @click="sendingMail=true"></el-button>
         </div>
         <el-input
+          v-if="Object.keys(selectedMail).length > 0"
           placeholder="搜索"
           prefix-icon="el-icon-search"
           size="mini"
@@ -36,62 +37,67 @@
       </div>
     </div>
     <div class="mailList">
-      <div :class="{'mailPreview':true,'selectedPreview':mail.chosen}" v-for="(mail) in search===''?rawMail:filtered"
-           :key="mail.id"
-           @click="chooseMail(mail)">
-        <div class="context">
-          <div class="head">
-            <div class="sender">
-              {{showSender(mail.sender)}}
+      <div v-if="selectedMailBox!=''">
+        <div :class="{'mailPreview':true,'selectedPreview':mail.chosen}" v-for="(mail) in search===''?rawMail:filtered"
+             :key="mail.id"
+             @click="chooseMail(mail)">
+          <div class="context">
+            <div class="head">
+              <div class="sender">
+                {{showSender(mail.sender)}}
+              </div>
+              <div class="time">
+                {{mail.date.toLocaleDateString()}}
+              </div>
             </div>
-            <div class="time">
-              {{mail.date.toLocaleDateString()}}
-            </div>
+            <div class="subject">{{mail.subject}}</div>
+            <div class="content">{{mail.extracted}}</div>
           </div>
-          <div class="subject">{{mail.subject}}</div>
-          <div class="content">{{mail.extracted}}</div>
         </div>
       </div>
     </div>
     <div class="detail">
-      <div class="header">
-        <div style="position: relative">
-          <el-tooltip effect="dark" :content="selectedMail.sender.email" placement="top">
-            <div class="sender">
-              {{selectedMail.sender.name?selectedMail.sender.name:selectedMail.sender.email}}
-            </div>
-          </el-tooltip>
-          <div class="time">
+      <div v-if="Object.keys(selectedMail).length > 0">
+        <div class="header">
+          <div style="position: relative">
+            <el-tooltip effect="dark" :content="selectedMail.sender.email" placement="top">
+              <div class="sender">
+                {{selectedMail.sender.name?selectedMail.sender.name:selectedMail.sender.email}}
+              </div>
+            </el-tooltip>
+            <div class="time">
             <span style="margin-right: 5px">
               {{selectedMail.date.toLocaleDateString([], {year: 'numeric', month: 'long', day: 'numeric'})}}
             </span>
-            <span>
+              <span>
               {{selectedMail.date.toLocaleTimeString()}}
             </span>
+            </div>
+          </div>
+          <div style="margin: 5px 0;">
+            <div class="common">
+              {{selectedMail.subject}}
+            </div>
+          </div>
+          <div>
+            <div class="common">
+              <span>收件人:</span>
+              <el-tooltip effect="dark" :content="selectedMail.receiver.email" placement="top">
+                <div class="infoBlock">
+                  {{selectedMail.receiver.name?selectedMail.receiver.name:selectedMail.receiver.email}}
+                </div>
+              </el-tooltip>
+            </div>
           </div>
         </div>
-        <div style="margin: 5px 0;">
-          <div class="common">
-            {{selectedMail.subject}}
-          </div>
-        </div>
-        <div>
-          <div class="common">
-            <span>收件人:</span>
-            <el-tooltip effect="dark" :content="selectedMail.receiver.email" placement="top">
-              <div class="infoBlock">
-                {{selectedMail.receiver.name?selectedMail.receiver.name:selectedMail.receiver.email}}
-              </div>
-            </el-tooltip>
-          </div>
-        </div>
+        <div class="content" v-if="selectedMail.html!==''||selectedMail.plain.match(/<[^>]*>/)"
+             v-html="selectedMail.html!==''?selectedMail.html:selectedMail.plain"></div>
+        <div class="content" v-else v-text="selectedMail.plain"></div>
       </div>
-      <div class="content" v-if="selectedMail.html!==''||selectedMail.plain.match(/<[^>]*>/)"
-           v-html="selectedMail.html!==''?selectedMail.html:selectedMail.plain"></div>
-      <div class="content" v-else v-text="selectedMail.plain"></div>
+      <user-info @add="addMailBox" @delete="deleteMailBox" :mails="mails" :enabled="showUserInfo"
+                 @close="showUserInfo=false"></user-info>
+      <send-mail :mail="selectedMailBox" :enabled="sendingMail" :reply="replyTo" @close="quitSending"></send-mail>
     </div>
-    <user-info @add="addMailBox" @delete="deleteMailBox" :mails="mails" :enabled="showUserInfo" @close="showUserInfo=false"></user-info>
-    <send-mail :mail="selectedMailBox" :enabled="sendingMail" :reply="replyTo" @close="quitSending"></send-mail>
   </div>
 </template>
 
@@ -119,15 +125,15 @@
       }
     },
     methods: {
-      addMailBox(mail){
+      addMailBox(mail) {
         this.mails.push(mail);
       },
-      deleteMailBox(index){
-        this.mails.splice(index,1);
+      deleteMailBox(index) {
+        this.mails.splice(index, 1);
       },
       reply() {
         this.replyTo = this.selectedMail.sender.email;
-        this.$nextTick(()=>{
+        this.$nextTick(() => {
           this.sendingMail = true;
         })
       },
@@ -244,8 +250,10 @@
           }
         } else {
           this.mails = res.data.mailBoxes;
-          this.selectedMailBox = this.mails[0];
-          this.getMailList();
+          if (this.mails.length > 0) {
+            this.selectedMailBox = this.mails[0];
+            this.getMailList();
+          }
         }
       }).catch(e => {
         this.$message.error('服务器开小差了');
@@ -419,57 +427,60 @@
       height: 100%;
       overflow: hidden;
 
-      > .header {
-        height: 80px;
-        position: relative;
-        overflow: hidden;
-        color: rgba(40, 39, 40, 1.000);
-        border-bottom: rgba(230, 230, 230, 1.000) 1px solid;
-        padding-bottom: 10px;
+      > div {
 
-        .selectedBlock {
-          background: rgba(2, 122, 255, 1.000);
-          color: rgba(220, 235, 255, 1.000);
-        }
+        > .header {
+          height: 80px;
+          position: relative;
+          overflow: hidden;
+          color: rgba(40, 39, 40, 1.000);
+          border-bottom: rgba(230, 230, 230, 1.000) 1px solid;
+          padding-bottom: 10px;
 
-        .sender {
-          padding: 0 5px;
-          display: inline-block;
-          font-weight: bold;
+          .selectedBlock {
+            background: rgba(2, 122, 255, 1.000);
+            color: rgba(220, 235, 255, 1.000);
+          }
 
-          &:hover {
-            background: rgba(187, 215, 255, 1.000);
+          .sender {
+            padding: 0 5px;
+            display: inline-block;
+            font-weight: bold;
+
+            &:hover {
+              background: rgba(187, 215, 255, 1.000);
+            }
+          }
+
+          .common {
+            display: inline-block;
+            padding: 0 5px;
+          }
+
+          .infoBlock {
+            display: inline-block;
+            color: rgba(128, 128, 128, 1.000);
+
+            &:hover {
+              background: rgba(187, 215, 255, 1.000);
+              color: rgba(0, 0, 0, 1.000);
+            }
+          }
+
+          .time {
+            right: 0;
+            position: absolute;
+            display: inline-block;
+            color: rgba(128, 128, 128, 1.000);
           }
         }
 
-        .common {
-          display: inline-block;
-          padding: 0 5px;
+        .content {
+          padding: 10px 0;
+          width: 100%;
+          height: 100%;
+          overflow: scroll;
         }
-
-        .infoBlock {
-          display: inline-block;
-          color: rgba(128, 128, 128, 1.000);
-
-          &:hover {
-            background: rgba(187, 215, 255, 1.000);
-            color: rgba(0, 0, 0, 1.000);
-          }
-        }
-
-        .time {
-          right: 0;
-          position: absolute;
-          display: inline-block;
-          color: rgba(128, 128, 128, 1.000);
-        }
-      }
-
-      .content {
-        padding: 10px 0;
-        width: 100%;
-        height: 100%;
-        overflow: scroll;
       }
     }
 

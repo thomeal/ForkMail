@@ -1,6 +1,6 @@
 <template>
   <el-dialog title="注册" width="40%" top="20vh" :show-close="false" :visible.sync="enabled" @closed="reset">
-    <el-form :model="registration" :rules="rules" ref="login">
+    <el-form :model="registration" :rules="rules" ref="register">
       <el-form-item label="手机号" :label-width="formLabelWidth" prop="username">
         <el-input v-model="registration.username"></el-input>
       </el-form-item>
@@ -8,7 +8,10 @@
         <el-input v-model="registration.nickname"></el-input>
       </el-form-item>
       <el-form-item label="密码" :label-width="formLabelWidth" prop="password">
-        <el-input v-model="registration.password"></el-input>
+        <el-input type="password" v-model="registration.password"></el-input>
+      </el-form-item>
+      <el-form-item label="确认密码" :label-width="formLabelWidth">
+        <el-input type="password" v-model="confirmingPassword"></el-input>
       </el-form-item>
     </el-form>
     <div slot="footer" class="dialog-footer">
@@ -26,6 +29,7 @@
     },
     data() {
       return {
+        confirmingPassword:'',
         rules: {
           username: [
             {validator: this.validateUsername, trigger: 'blur'}
@@ -47,7 +51,7 @@
     },
     methods: {
       register() {
-        this.$ref.register.validate(valid => {
+        this.$refs.register.validate(valid => {
           if (valid) {
             this.$axios({
               url: 'http://localhost:8000/register/',
@@ -78,8 +82,12 @@
       },
       validatePassword(rule, value, callback) {
         let validateReg = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[^]{8,16}$/;
-        if (validateReg.test(value))
-          callback();
+        if (validateReg.test(value)) {
+          if (value!==this.confirmingPassword)
+            callback(new Error('两次输入的密码不一致'))
+          else
+            callback();
+        }
         else
           callback(new Error('8-16个字符，至少1个大写字母，1个小写字母和1个数字'))
       },

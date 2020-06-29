@@ -4,7 +4,7 @@ import hashlib
 from django.core.cache import cache
 
 HEADER = {'typ': 'JWP', 'alg': 'default'}
-KEY = 'CHEN_FENG_YAO'
+KEY = 'Wang_Qisong'
 SALT = 'forkmail'
 TIME_OUT = 2 * 60 * 60  # 2小时
 
